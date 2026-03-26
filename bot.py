@@ -15,13 +15,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 START_TEXT = (
-    "Привет! Я *Преживи* – твой сербский разговорник 🇷🇸\n\n"
+    "Привет! Я <b>Преживи</b> – твой сербский разговорник 🇷🇸\n\n"
     "Просто напиши мне бытовую ситуацию на русском, и я выдам "
     "готовые фразы на сербском.\n\n"
     "Например:\n"
-    "• _Иду на почту забрать посылку_\n"
-    "• _Хочу записаться к врачу_\n"
-    "• _Нужно оплатить квитанцию в менячнице_\n\n"
+    "• <i>Иду на почту забрать посылку</i>\n"
+    "• <i>Хочу записаться к врачу</i>\n"
+    "• <i>Нужно оплатить квитанцию в менячнице</i>\n\n"
     "Команды:\n"
     "/sos – фразы-спасатели на все случаи жизни\n"
     "/help – краткая справка"
@@ -38,15 +38,15 @@ MAX_MESSAGE_LENGTH = 4096
 
 
 async def start(update: Update, context) -> None:
-    await update.message.reply_text(START_TEXT, parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(START_TEXT, parse_mode=ParseMode.HTML)
 
 
 async def help_command(update: Update, context) -> None:
-    await update.message.reply_text(HELP_TEXT, parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(HELP_TEXT, parse_mode=ParseMode.HTML)
 
 
 async def sos(update: Update, context) -> None:
-    await update.message.reply_text(SOS_PHRASES)
+    await update.message.reply_text(SOS_PHRASES, parse_mode=ParseMode.HTML)
 
 
 async def handle_message(update: Update, context) -> None:
@@ -59,7 +59,7 @@ async def handle_message(update: Update, context) -> None:
 
     # Split long messages
     if len(reply) <= MAX_MESSAGE_LENGTH:
-        await update.message.reply_text(reply)
+        await update.message.reply_text(reply, parse_mode=ParseMode.HTML)
     else:
         chunks: list[str] = []
         while reply:
@@ -73,7 +73,7 @@ async def handle_message(update: Update, context) -> None:
             reply = reply[split_pos:].lstrip("\n")
 
         for chunk in chunks:
-            await update.message.reply_text(chunk)
+            await update.message.reply_text(chunk, parse_mode=ParseMode.HTML)
 
 
 def main() -> None:
