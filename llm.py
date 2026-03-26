@@ -19,7 +19,7 @@ async def generate_phrasebook(user_text: str) -> str:
             contents=user_text,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
-                max_output_tokens=1024,
+                max_output_tokens=2048,
             ),
         )
         return response.text

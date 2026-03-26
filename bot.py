@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 
@@ -49,6 +50,32 @@ async def sos(update: Update, context) -> None:
     await update.message.reply_text(SOS_PHRASES, parse_mode=ParseMode.HTML)
 
 
+def _sanitize_html(text: str) -> str:
+    """Escape stray HTML entities while preserving allowed <b> and <i> tags."""
+    # Temporarily replace allowed tags with placeholders
+    replacements = {
+        "<b>": "\x00b\x00", "</b>": "\x00/b\x00",
+        "<i>": "\x00i\x00", "</i>": "\x00/i\x00",
+    }
+    for tag, placeholder in replacements.items():
+        text = text.replace(tag, placeholder)
+    # Escape everything else
+    text = html.escape(text)
+    # Restore allowed tags
+    for tag, placeholder in replacements.items():
+        text = text.replace(placeholder, tag)
+    return text
+
+
+async def _send_reply(update: Update, text: str) -> None:
+    """Send a reply with HTML parse mode, falling back to plain text on error."""
+    try:
+        await update.message.reply_text(text, parse_mode=ParseMode.HTML)
+    except Exception:
+        logger.warning("HTML parse failed, sending as plain text")
+        await update.message.reply_text(text)
+
+
 async def handle_message(update: Update, context) -> None:
     user_text = update.message.text
     logger.info("Request from %s: %s", update.effective_user.id, user_text)
@@ -56,10 +83,11 @@ async def handle_message(update: Update, context) -> None:
     await update.message.chat.send_action(ChatAction.TYPING)
 
     reply = await generate_phrasebook(user_text)
+    reply = _sanitize_html(reply)
 
     # Split long messages
     if len(reply) <= MAX_MESSAGE_LENGTH:
-        await update.message.reply_text(reply, parse_mode=ParseMode.HTML)
+        await _send_reply(update, reply)
     else:
         chunks: list[str] = []
         while reply:
@@ -73,7 +101,7 @@ async def handle_message(update: Update, context) -> None:
             reply = reply[split_pos:].lstrip("\n")
 
         for chunk in chunks:
-            await update.message.reply_text(chunk, parse_mode=ParseMode.HTML)
+            await _send_reply(update, chunk)
 
 
 def main() -> None:
